@@ -1,5 +1,5 @@
 #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
-stocks = ['SPOT', 'AAPL', 'COIN', 'ZM', 'AMZN', 'NFLX', 'SHOP', 'TSLA', 'LC', 'NVDA', 'F', 'WMT']
+stocks = ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'FB', 'AMZN', 'NFLX', 'GS', 'JNJ', 'C', 'JPM']
 data = list()
 import requests
 import pandas as pd
@@ -63,7 +63,7 @@ for stock in stocks:
             actual_growth = LTGrowth*.50 + operating_cash_growth*.50
     except:
         actual_growth = LTGrowth
-    actual_growth = round(actual_growth*100, 2)    
+    
     
     #DIVIDEND
     try:
@@ -235,7 +235,9 @@ for stock in stocks:
         recommendation = "Sell"
     else:
         recommendation = "Strong Sell"
-        
+
+    actual_growth = round(actual_growth*100, 2)   
+    
     #OPTIONAL DATAFRAME FORMAT OF THE DATA, USE THIS IF YOU WANT TO EXPORT TO EXCEL
     data.append({
         'Company': company_name,
@@ -250,5 +252,3 @@ for stock in stocks:
     
     
     print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
-
-    
