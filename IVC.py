@@ -20,7 +20,6 @@ for stock in stocks:
         LTGrowth = round(LTGrowth, 2)
     except:
         continue 
-        
     
     #PREVIOUS OPERATING CASH GROWTH
     try:
@@ -112,7 +111,6 @@ for stock in stocks:
     except:
         discountrate = .06
         
-
     #PROJECTED CASH FLOW BY YEAR
     actual_growth = actual_growth/100
     if operating_cash > 0:
@@ -178,10 +176,13 @@ for stock in stocks:
         shares_outstanding = stock.info['sharesOutstanding']
     except:
         continue
+    
     #COMPANY NAME
     company_name = stock.info['shortName']
+    
     #TICKER SYMBOL
     symbol = stock.info['symbol']
+    
     #TOTAL CASH
     try:
         total_cash_final = stock.info['totalCash']
@@ -196,26 +197,29 @@ for stock in stocks:
     except:
         continue
 
-    
     #TOTAL CASH FLOW OVER 10 YEARS
     total_net_cash = net_yr1 + net_yr2 + net_yr3 + net_yr4 + net_yr5 + net_yr6 +net_yr7+net_yr8+net_yr9 + net_yr10
-    #GROSS
+    
+    #GROSS INTRINSIC VALUE
     try:
         gross_intrinsic_value = total_net_cash/shares_outstanding
     except:
         continue
+    
     #CASH PER SHARE
     cash_per_share = total_cash_final/shares_outstanding
+    
     #DEBT PER SHARE
     debt_per_share = total_debt_final/shares_outstanding
+    
     #FINAL
     intrinsic_value_final = gross_intrinsic_value + dividend + cash_per_share - debt_per_share
     intrinsic_value_final = "{:.2f}".format(intrinsic_value_final)
     intrinsic_value_final = float(intrinsic_value_final)
     if intrinsic_value_final <0:
         intrinsic_value_final = 0
+        
     #currentprice
-
     current_price = stock.info['currentPrice']
     current_price = round(current_price, 2)
 
@@ -247,7 +251,7 @@ for stock in stocks:
     
     actual_growth = round(actual_growth*100, 2)
     discount = round(discount, 2)
-    target_price = stock.info['targetMeanPrice']
+   
     print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
 
     
