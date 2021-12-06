@@ -1,4 +1,4 @@
-#ENTER ANY NUMBER OF STOCKS YOU WANT
+#ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
 stocks = ['SPOT', 'AAPL', 'COIN', 'ZM', 'AMZN', 'NFLX', 'SHOP', 'TSLA', 'LC', 'NVDA', 'F', 'WMT']
 data = list()
 import requests
@@ -7,6 +7,7 @@ import yfinance as yf
 from bs4 import BeautifulSoup
 print ("{:<6} {:>13} {:>20} {:>18} {:>13} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Current Price','Discount', 'Recommendation'))
 print('----------------------------------------------------------------------------------------------')
+
 for stock in stocks:
     #EPS
     try:
@@ -62,7 +63,8 @@ for stock in stocks:
             actual_growth = LTGrowth*.50 + operating_cash_growth*.50
     except:
         actual_growth = LTGrowth
-
+    actual_growth = round(actual_growth*100, 2)    
+    
     #DIVIDEND
     try:
         url = f'https://www.marketwatch.com/investing/stock/{stock}?mod=quote_search'
@@ -87,8 +89,6 @@ for stock in stocks:
     except:
         continue
     
-   
-   
    #CURRENT DISCOUNT RATE
     try:
         beta = stock.info['beta']
@@ -145,7 +145,6 @@ for stock in stocks:
         #print(total_cash_yr9)
         total_cash_yr10 = total_cash_yr9 + ((total_cash_yr8 - total_cash_yr9)*-1)*(1+actual_growth)
         #print(total_cash_yr10)
-    
     
     #DISCOUNT RATES PER YEAR
     dr1 = 1/(1+discountrate)
@@ -212,7 +211,7 @@ for stock in stocks:
     #DEBT PER SHARE
     debt_per_share = total_debt_final/shares_outstanding
     
-    #FINAL
+    #INTRINSIC VALUE 
     intrinsic_value_final = gross_intrinsic_value + dividend + cash_per_share - debt_per_share
     intrinsic_value_final = "{:.2f}".format(intrinsic_value_final)
     intrinsic_value_final = float(intrinsic_value_final)
@@ -222,22 +221,10 @@ for stock in stocks:
     #currentprice
     current_price = stock.info['currentPrice']
     current_price = round(current_price, 2)
-
+    
+    #DISCOUNT
     discount = ((intrinsic_value_final-current_price)/current_price)*100
-
-    #OPTIONAL DATAFRAME FORMAT OF THE DATA, USE THIS IF YOU WANT TO EXPORT TO EXCEL
-    data.append({
-        'Company': company_name,
-        'Ticker': symbol,
-        'Proj. EPS Growth': "{:.1f}".format(LTGrowth),
-        'Final Growth': "{:.1f}".format(actual_growth),
-        'Stock Intrinsic Value': intrinsic_value_final,
-        'Current Price': current_price,
-        'Discount %': "{:.1f}".format(discount)
-    })
-    df = pd.DataFrame(data)
-   
-
+    discount = round(discount, 2)
     if discount > 50:
         recommendation = 'Strong Buy'
     elif 15 <= discount <= 50:
@@ -248,10 +235,20 @@ for stock in stocks:
         recommendation = "Sell"
     else:
         recommendation = "Strong Sell"
+        
+    #OPTIONAL DATAFRAME FORMAT OF THE DATA, USE THIS IF YOU WANT TO EXPORT TO EXCEL
+    data.append({
+        'Company': company_name,
+        'Ticker': symbol,
+        'LT Growth Est.': "{:.1f}".format(actual_growth),
+        'Stock Intrinsic Value': intrinsic_value_final,
+        'Current Price': current_price,
+        'Discount %': "{:.1f}".format(discount),
+        'Recommendation': recommendation
+    })
+    df = pd.DataFrame(data)
     
-    actual_growth = round(actual_growth*100, 2)
-    discount = round(discount, 2)
-   
-    print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
+    
+   print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
 
     
