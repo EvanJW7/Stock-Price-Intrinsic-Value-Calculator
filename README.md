@@ -1,5 +1,5 @@
 # Intrinsic Value Calculator 
-This program calculates a stock's intrinsic value per share based on future cash flow growth. 
+This program calculates a stock's intrinsic value per share based on future estimated cash flow growth. 
     
     #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
     stocks = ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'FB', 'AMZN', 'NFLX', 'GS', 'JNJ', 'C', 'JPM']
