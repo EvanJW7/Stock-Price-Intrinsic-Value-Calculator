@@ -1,15 +1,21 @@
 #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
-stocks = ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'FB', 'AMZN', 'NFLX', 'GS', 'JNJ', 'C', 'JPM']
+stocks = ['JNJ', 'NVDA', 'AVGO', 'ZM', 'AAPL', 'AMZN', 'MSFT', 'GOOGL', 'FB', 'F', 'ROKU', 'UPS', 'AMD', 'SQ', 'PEP', 'KO', 'PFE']
 data = list()
 import requests
 import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
+from matplotlib import pyplot as plt 
+
 print ("{:<6} {:>13} {:>20} {:>18} {:>13} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Current Price','Discount', 'Recommendation'))
-print('----------------------------------------------------------------------------------------------')
+print('---------------------------------------------------------------------------------------------')
+
+name = []
+price = []
+value = []
 
 for stock in stocks:
-    #EPS
+    #LONG TERM GROWTH
     try:
         url = f'https://www.alphaquery.com/stock/{stock}/all-data-variables'
         headers = {'Accept': 'text/html'}
@@ -20,8 +26,8 @@ for stock in stocks:
         LTGrowth = (float(PE.text)/float(PEG.text))
         LTGrowth = round(LTGrowth, 2)
     except:
-        continue 
-    
+        continue  
+        
     #PREVIOUS OPERATING CASH GROWTH
     try:
         url = f'http://www.aastocks.com/en/usq/analysis/company-fundamental/cash-flow?symbol={stock}'
@@ -56,13 +62,23 @@ for stock in stocks:
         
         operating_cash_growth = ((growth1+growth2+growth3+growth4)/4)
         operating_cash_growth = round(operating_cash_growth, 2)
-        
-        if point1<point2 and point2<point3 and point3<point4 and point4<point5:
-            actual_growth = LTGrowth*.75 + operating_cash_growth*.25
-        else:
-            actual_growth = LTGrowth*.50 + operating_cash_growth*.50
     except:
-        actual_growth = LTGrowth
+        continue
+        
+    #PREVIOUS EPS GROWTH
+    try:
+        url = f'https://www.reuters.com/companies/{stock}.OQ/key-metrics'
+        res = requests.get(url)
+        soup = BeautifulSoup(res.text, 'lxml')
+        PrevEPSGrowth = float(soup.findAll('span', class_ =  "TextLabel__text-label___3oCVw TextLabel__black___2FN-Z TextLabel__regular___2X0ym digits MarketsTable-value-FP5ul")[115].text) 
+    except:
+        PrevEPSGrowth = operating_cash_growth  
+    
+    
+    if point1<point2 and point2<point3 and point3<point4 and point4<point5:
+        actual_growth = LTGrowth*.75 + operating_cash_growth*.125 + PrevEPSGrowth*.125
+    else:
+        actual_growth = LTGrowth*.50 + operating_cash_growth*.25 + PrevEPSGrowth*.25
     
     
     #DIVIDEND
@@ -75,21 +91,15 @@ for stock in stocks:
         dividend = (float(divid)*4*10)
     except:
         dividend = 0
-
+    
     #OPERATING CASH TTM 
     try:
         stock = yf.Ticker(stock)
-        operating_cash = float(stock.info['operatingCashflow']) 
-    except ValueError:
-        url = f'http://www.aastocks.com/en/usq/analysis/company-fundamental/cash-flow?symbol={stock}'
-        res = requests.get(url)
-        soup = BeautifulSoup(res.text, 'lxml')
-        cash = soup.findAll('td')[134].text
-        operating_cash = float(cash.replace(',',''))*1000000
+        operating_cash = float(stock.info['operatingCashflow'])
+       
     except:
-        continue
-    
-   #CURRENT DISCOUNT RATE
+        continue  
+    #CURRENT DISCOUNT RATE
     try:
         beta = stock.info['beta']
         if beta < .80:
@@ -145,7 +155,7 @@ for stock in stocks:
         #print(total_cash_yr9)
         total_cash_yr10 = total_cash_yr9 + ((total_cash_yr8 - total_cash_yr9)*-1)*(1+actual_growth)
         #print(total_cash_yr10)
-    
+        
     #DISCOUNT RATES PER YEAR
     dr1 = 1/(1+discountrate)
     dr2 = 1/(1+discountrate)**2
@@ -169,6 +179,7 @@ for stock in stocks:
     net_yr8 = dr8 * total_cash_yr8
     net_yr9 = dr9 * total_cash_yr9
     net_yr10 = dr10 * total_cash_yr10
+    
     
     #SHARES OUTSTANDING
     try:
@@ -197,11 +208,11 @@ for stock in stocks:
         continue
 
     #TOTAL CASH FLOW OVER 10 YEARS
-    total_net_cash = net_yr1 + net_yr2 + net_yr3 + net_yr4 + net_yr5 + net_yr6 +net_yr7+net_yr8+net_yr9 + net_yr10
+    total_cash_net = net_yr1 + net_yr2 + net_yr3 + net_yr4 + net_yr5 + net_yr6 +net_yr7+net_yr8+net_yr9 + net_yr10
     
     #GROSS INTRINSIC VALUE
     try:
-        gross_intrinsic_value = total_net_cash/shares_outstanding
+        gross_intrinsic_value = total_cash_net/shares_outstanding
     except:
         continue
     
@@ -248,7 +259,22 @@ for stock in stocks:
         'Discount %': "{:.1f}".format(discount),
         'Recommendation': recommendation
     })
-    df = pd.DataFrame(data)
+    stats = pd.DataFrame(data)
     
-    
+    marketcap = int(round((current_price*shares_outstanding)/1000000000, 0))
+    intrinsic_market_cap = int(round((intrinsic_value_final*shares_outstanding)/1000000000, 2))
     print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
+    name.append(symbol)
+    price.append(marketcap)
+    value.append(intrinsic_market_cap)
+    
+plt.style.use('seaborn')
+plt.title('Price vs Intrinsic Value Graph')
+plt.xlabel('Market Cap (millions)')
+#plt.xscale('log')
+plt.ylabel('Intrinsic Value (millions)')
+#plt.yscale('log')
+plt.scatter(price, value, s = 20)
+for i, label in enumerate(name):
+    plt.annotate(label, (price[i], value[i]))
+plt.show()
