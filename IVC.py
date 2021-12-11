@@ -1,11 +1,11 @@
 #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
-stocks = ['JNJ', 'NVDA', 'AVGO', 'ZM', 'AAPL', 'AMZN', 'MSFT', 'GOOGL', 'FB', 'F', 'ROKU', 'UPS', 'AMD', 'SQ', 'PEP', 'KO', 'PFE']
+stocks = ['AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD','ZM', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'PG', 'UPS', 'V', 'MA', 'FDX', 'GE', 'CIEN', 'SQ']
 data = list()
 import requests
 import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
-from matplotlib import pyplot as plt 
+from matplotlib import lines, pyplot as plt 
 
 print ("{:<6} {:>13} {:>20} {:>18} {:>13} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Current Price','Discount', 'Recommendation'))
 print('---------------------------------------------------------------------------------------------')
@@ -13,6 +13,7 @@ print('-------------------------------------------------------------------------
 name = []
 price = []
 value = []
+ratio = []
 
 for stock in stocks:
     #LONG TERM GROWTH
@@ -26,7 +27,7 @@ for stock in stocks:
         LTGrowth = (float(PE.text)/float(PEG.text))
         LTGrowth = round(LTGrowth, 2)
     except:
-        continue  
+        continue
         
     #PREVIOUS OPERATING CASH GROWTH
     try:
@@ -260,21 +261,26 @@ for stock in stocks:
         'Recommendation': recommendation
     })
     stats = pd.DataFrame(data)
-    
+   
     marketcap = int(round((current_price*shares_outstanding)/1000000000, 0))
     intrinsic_market_cap = int(round((intrinsic_value_final*shares_outstanding)/1000000000, 2))
+    
     print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
+    
     name.append(symbol)
     price.append(marketcap)
     value.append(intrinsic_market_cap)
-    
+    ratio.append(intrinsic_value_final/current_price)
+
 plt.style.use('seaborn')
-plt.title('Price vs Intrinsic Value Graph')
-plt.xlabel('Market Cap (millions)')
-#plt.xscale('log')
-plt.ylabel('Intrinsic Value (millions)')
-#plt.yscale('log')
-plt.scatter(price, value, s = 20)
+plt.title('Price vs Intrinsic Value Scatterplot')
+plt.xlabel('Market Cap (billions)')
+plt.ylabel('Total Intrinsic Value (billions)') 
+plt.scatter(price, value, s = 20, c = ratio, edgecolor = 'k', cmap = 'RdYlGn')
 for i, label in enumerate(name):
     plt.annotate(label, (price[i], value[i]))
+myMax = max(max(price), max(value))
+plt.plot([0,myMax], [0,myMax], color = 'gray')
 plt.show()
+
+
