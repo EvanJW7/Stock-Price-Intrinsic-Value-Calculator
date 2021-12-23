@@ -1,14 +1,14 @@
 #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
-stocks = ['AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD','ZM', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'PG', 'UPS', 'V', 'MA', 'FDX', 'GE', 'CIEN', 'SQ']
+stocks = ['COIN', 'MA', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD','ZM', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'PG', 'UPS', 'V', 'FDX', 'GE', 'CIEN', 'SQ']
 data = list()
 import requests
 import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
-from matplotlib import lines, pyplot as plt 
+from matplotlib import pyplot as plt 
 
-print ("{:<6} {:>13} {:>20} {:>18} {:>13} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Current Price','Discount', 'Recommendation'))
-print('---------------------------------------------------------------------------------------------')
+print ("{:<6} {:>13} {:>18} {:>15} {:>11} {:>17} {:>12} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Target Price', 'Average','Current Price','Discount', 'Recommendation'))
+print('---------------------------------------------------------------------------------------------------------------------')
 
 name = []
 price = []
@@ -16,6 +16,7 @@ value = []
 ratio = []
 
 for stock in stocks:
+    
     #LONG TERM GROWTH
     try:
         url = f'https://www.alphaquery.com/stock/{stock}/all-data-variables'
@@ -25,10 +26,71 @@ for stock in stocks:
         PE = soup.find_all('td', class_ = 'text-right')[164]
         PEG = soup.findAll('td', class_ = 'text-right')[166]
         LTGrowth = (float(PE.text)/float(PEG.text))
-        LTGrowth = round(LTGrowth, 2)
-    except:
-        continue
         
+    except:
+        try:
+            url = f'https://www.marketwatch.com/investing/stock/{stock}/analystestimates?mod=mw_quote_tab'
+            res = requests.get(url)
+            soup = BeautifulSoup(res.text, 'lxml')
+            thisyear = float(soup.findAll('th', class_ = "table__cell")[8].text.replace(',',''))
+            nextyear = float(soup.findAll('th', class_ = "table__cell")[9].text.replace(',',''))
+            if nextyear == 0:
+                nextyear = .01
+            nextyear2 = float(soup.findAll('th', class_ = "table__cell")[10].text.replace(',',''))
+            if nextyear2 == 0:
+                nextyear2 = .01
+            nextyear3 = float(soup.findAll('th', class_ = "table__cell")[11].text.replace(',',''))
+            if nextyear3 == 0:
+                nextyear3 = .01
+            a = ((nextyear - thisyear)/ abs(thisyear)) *100
+            if a > 100:
+                a = 100
+            if a <= -100:
+                a = -100
+            b = ((nextyear2 - nextyear) / abs(nextyear)) *100 
+            if b > 100:
+                b = 100
+            if b <= -100:
+                b = -100
+            c = ((nextyear3 - nextyear2)/ abs(nextyear2))*100
+            if c > 100:
+                c = 100
+            if c <= -100:
+                c = -100
+            EPSGrowth = ((a+b+c)/3)
+            EPSGrowth = float(format(EPSGrowth, ".4"))
+            LTGrowth = EPSGrowth/2
+            if LTGrowth > 40:
+                LTGrowth = LTGrowth*.90
+        except:
+            url = f'https://www.marketwatch.com/investing/stock/{stock}/analystestimates?mod=mw_quote_tab'
+            res = requests.get(url)
+            soup = BeautifulSoup(res.text, 'lxml')
+            nextyear = float(soup.findAll('th', class_ = "table__cell")[9].text.replace(',',''))
+            if nextyear == 0:
+                nextyear = .01
+            nextyear2 = float(soup.findAll('th', class_ = "table__cell")[10].text.replace(',',''))
+            if nextyear2 == 0:
+                nextyear2 = .01
+            nextyear3 = float(soup.findAll('th', class_ = "table__cell")[11].text.replace(',',''))
+            if nextyear3 == 0:
+                nextyear3 = .01
+            a = ((nextyear2 - nextyear) / abs(nextyear)) *100 
+            if a > 100:
+                a = 100
+            if a <= -100:
+                a = -100
+            b = ((nextyear3 - nextyear2)/ abs(nextyear2))*100
+            if b > 100:
+                b = 100
+            if b <= -100:
+                b = -100
+            EPSGrowth = (a+b)/2
+            EPSGrowth = float(format(EPSGrowth, ".4"))
+            LTGrowth = EPSGrowth/2
+            if LTGrowth > 40:
+                LTGrowth = LTGrowth*.90 
+                
     #PREVIOUS OPERATING CASH GROWTH
     try:
         url = f'http://www.aastocks.com/en/usq/analysis/company-fundamental/cash-flow?symbol={stock}'
@@ -63,9 +125,10 @@ for stock in stocks:
         
         operating_cash_growth = ((growth1+growth2+growth3+growth4)/4)
         operating_cash_growth = round(operating_cash_growth, 2)
+    
     except:
-        continue
-        
+        operating_cash_growth = LTGrowth
+    
     #PREVIOUS EPS GROWTH
     try:
         url = f'https://www.reuters.com/companies/{stock}.OQ/key-metrics'
@@ -76,10 +139,14 @@ for stock in stocks:
         PrevEPSGrowth = operating_cash_growth  
     
     
-    if point1<point2 and point2<point3 and point3<point4 and point4<point5:
-        actual_growth = LTGrowth*.75 + operating_cash_growth*.125 + PrevEPSGrowth*.125
-    else:
-        actual_growth = LTGrowth*.50 + operating_cash_growth*.25 + PrevEPSGrowth*.25
+    try:
+        if point1<point2 and point2<point3 and point3<point4 and point4<point5:
+            actual_growth = LTGrowth*.75 + operating_cash_growth*.125 + PrevEPSGrowth*.125
+        else:
+            actual_growth = LTGrowth*.34 + operating_cash_growth*.33 + PrevEPSGrowth*.33
+    except:
+        actual_growth = operating_cash_growth 
+    
     
     
     #DIVIDEND
@@ -137,25 +204,15 @@ for stock in stocks:
         total_cash_yr10 = total_cash_yr9*(1+actual_growth)
     else:
         total_cash_yr1 = operating_cash
-        #print(total_cash_yr1)
         total_cash_yr2 =  operating_cash - operating_cash*actual_growth
-        #print(f'Cash yr 2: {total_cash_yr2}')
         total_cash_yr3 = total_cash_yr2 + ((operating_cash-total_cash_yr2)*-1)*(1+actual_growth)
-        #print(total_cash_yr3)
         total_cash_yr4 = total_cash_yr3 + ((total_cash_yr2-total_cash_yr3)*-1)*(1+actual_growth)
-        #print(total_cash_yr4)
         total_cash_yr5 = total_cash_yr4 + ((total_cash_yr3-total_cash_yr4)*-1)*(1+actual_growth)
-        #print(total_cash_yr5)
         total_cash_yr6 = total_cash_yr5 + ((total_cash_yr4 - total_cash_yr5)*-1)*(1+actual_growth)
-        #print(total_cash_yr6)
         total_cash_yr7 = total_cash_yr6 + ((total_cash_yr5 - total_cash_yr6)*-1)*(1+actual_growth)
-        #print(total_cash_yr7)
         total_cash_yr8 = total_cash_yr7 + ((total_cash_yr6 - total_cash_yr7)*-1)*(1+actual_growth)
-        #print(total_cash_yr8)
         total_cash_yr9 = total_cash_yr8 + ((total_cash_yr7- total_cash_yr8)*-1)*(1+actual_growth)
-        #print(total_cash_yr9)
         total_cash_yr10 = total_cash_yr9 + ((total_cash_yr8 - total_cash_yr9)*-1)*(1+actual_growth)
-        #print(total_cash_yr10)
         
     #DISCOUNT RATES PER YEAR
     dr1 = 1/(1+discountrate)
@@ -224,18 +281,26 @@ for stock in stocks:
     debt_per_share = total_debt_final/shares_outstanding
     
     #INTRINSIC VALUE 
-    intrinsic_value_final = gross_intrinsic_value + dividend + cash_per_share - debt_per_share
-    intrinsic_value_final = "{:.2f}".format(intrinsic_value_final)
-    intrinsic_value_final = float(intrinsic_value_final)
-    if intrinsic_value_final <0:
-        intrinsic_value_final = 0
+    intrinsic_value = gross_intrinsic_value + dividend + cash_per_share - debt_per_share
+    intrinsic_value = "{:.2f}".format(intrinsic_value)
+    intrinsic_value = float(intrinsic_value)
+    if intrinsic_value <0:
+        intrinsic_value = 0
+        
+    target_price = stock.info['targetMeanPrice']
+    try:
+        price_final = (intrinsic_value + target_price)/2
+        price_final = round(price_final, 2)
+    except:
+        price_final = intrinsic_value 
+        target_price = "None"
         
     #currentprice
     current_price = stock.info['currentPrice']
     current_price = round(current_price, 2)
     
     #DISCOUNT
-    discount = ((intrinsic_value_final-current_price)/current_price)*100
+    discount = ((price_final-current_price)/current_price)*100
     discount = round(discount, 2)
     if discount > 50:
         recommendation = 'Strong Buy'
@@ -255,32 +320,37 @@ for stock in stocks:
         'Company': company_name,
         'Ticker': symbol,
         'LT Growth Est.': "{:.1f}".format(actual_growth),
-        'Stock Intrinsic Value': intrinsic_value_final,
+        'Stock Intrinsic Value': price_final,
+        'Wall St. Target Price': target_price, 
+        'Average': price_final
         'Current Price': current_price,
         'Discount %': "{:.1f}".format(discount),
         'Recommendation': recommendation
     })
     stats = pd.DataFrame(data)
-   
+    
     marketcap = int(round((current_price*shares_outstanding)/1000000000, 0))
-    intrinsic_market_cap = int(round((intrinsic_value_final*shares_outstanding)/1000000000, 2))
-    
-    print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value_final:>19}{current_price:>20}{discount:>15}%{recommendation:>18}")
-    
+    intrinsic_market_cap = int(round((price_final*shares_outstanding)/1000000000, 2))
+   
+    print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value:>16}{target_price:>17}{price_final:>16}{current_price:>15}{discount:>15}%{recommendation:>17}")
     name.append(symbol)
     price.append(marketcap)
     value.append(intrinsic_market_cap)
-    ratio.append(intrinsic_value_final/current_price)
+    ratio.append(price_final/current_price)
 
 plt.style.use('seaborn')
 plt.title('Price vs Intrinsic Value Scatterplot')
 plt.xlabel('Market Cap (billions)')
 plt.ylabel('Total Intrinsic Value (billions)') 
+import matplotlib.colors as mcolors 
+mcolors.TwoSlopeNorm(vcenter = 1)
 plt.scatter(price, value, s = 20, c = ratio, edgecolor = 'k', cmap = 'RdYlGn')
 for i, label in enumerate(name):
     plt.annotate(label, (price[i], value[i]))
 myMax = max(max(price), max(value))
 plt.plot([0,myMax], [0,myMax], color = 'gray')
 plt.show()
+
+
 
 
