@@ -1,14 +1,15 @@
 #ENTER ANY NUMBER OF STOCKS YOU WANT, THEN RUN 
 stocks = ['COIN', 'MA', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD','ZM', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'PG', 'UPS', 'V', 'FDX', 'GE', 'CIEN', 'SQ']
 data = list()
+from numpy import average
 import requests
 import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt 
 
-print ("{:<6} {:>13} {:>18} {:>15} {:>11} {:>17} {:>12} {:>18}".format('Stock','Est.Growth','Intrinsic Value','Target Price', 'Average','Current Price','Discount', 'Recommendation'))
-print('---------------------------------------------------------------------------------------------------------------------')
+print ("{:<6} {:>13} {:>17} {:>15} {:>12} {:>17}".format('Stock','Est.Growth','Intrinsic Value','Current Price','Discount', 'Recommendation'))
+print('--------------------------------------------------------------------------------------')
 
 name = []
 price = []
@@ -63,34 +64,37 @@ for stock in stocks:
             if LTGrowth > 40:
                 LTGrowth = LTGrowth*.90
         except:
-            url = f'https://www.marketwatch.com/investing/stock/{stock}/analystestimates?mod=mw_quote_tab'
-            res = requests.get(url)
-            soup = BeautifulSoup(res.text, 'lxml')
-            nextyear = float(soup.findAll('th', class_ = "table__cell")[9].text.replace(',',''))
-            if nextyear == 0:
-                nextyear = .01
-            nextyear2 = float(soup.findAll('th', class_ = "table__cell")[10].text.replace(',',''))
-            if nextyear2 == 0:
-                nextyear2 = .01
-            nextyear3 = float(soup.findAll('th', class_ = "table__cell")[11].text.replace(',',''))
-            if nextyear3 == 0:
-                nextyear3 = .01
-            a = ((nextyear2 - nextyear) / abs(nextyear)) *100 
-            if a > 100:
-                a = 100
-            if a <= -100:
-                a = -100
-            b = ((nextyear3 - nextyear2)/ abs(nextyear2))*100
-            if b > 100:
-                b = 100
-            if b <= -100:
-                b = -100
-            EPSGrowth = (a+b)/2
-            EPSGrowth = float(format(EPSGrowth, ".4"))
-            LTGrowth = EPSGrowth/2
-            if LTGrowth > 40:
-                LTGrowth = LTGrowth*.90 
-                
+            try:
+                url = f'https://www.marketwatch.com/investing/stock/{stock}/analystestimates?mod=mw_quote_tab'
+                res = requests.get(url)
+                soup = BeautifulSoup(res.text, 'lxml')
+                nextyear = float(soup.findAll('th', class_ = "table__cell")[9].text.replace(',',''))
+                if nextyear == 0:
+                    nextyear = .01
+                nextyear2 = float(soup.findAll('th', class_ = "table__cell")[10].text.replace(',',''))
+                if nextyear2 == 0:
+                    nextyear2 = .01
+                nextyear3 = float(soup.findAll('th', class_ = "table__cell")[11].text.replace(',',''))
+                if nextyear3 == 0:
+                    nextyear3 = .01
+                a = ((nextyear2 - nextyear) / abs(nextyear)) *100 
+                if a > 100:
+                    a = 100
+                if a <= -100:
+                    a = -100
+                b = ((nextyear3 - nextyear2)/ abs(nextyear2))*100
+                if b > 100:
+                    b = 100
+                if b <= -100:
+                    b = -100
+                EPSGrowth = (a+b)/2
+                EPSGrowth = float(format(EPSGrowth, ".4"))
+                LTGrowth = EPSGrowth/2
+                if LTGrowth > 40:
+                    LTGrowth = LTGrowth*.90 
+            except:
+                continue
+
     #PREVIOUS OPERATING CASH GROWTH
     try:
         url = f'http://www.aastocks.com/en/usq/analysis/company-fundamental/cash-flow?symbol={stock}'
@@ -287,20 +291,13 @@ for stock in stocks:
     if intrinsic_value <0:
         intrinsic_value = 0
         
-    target_price = stock.info['targetMeanPrice']
-    try:
-        price_final = (intrinsic_value + target_price)/2
-        price_final = round(price_final, 2)
-    except:
-        price_final = intrinsic_value 
-        target_price = "None"
         
     #currentprice
     current_price = stock.info['currentPrice']
     current_price = round(current_price, 2)
     
     #DISCOUNT
-    discount = ((price_final-current_price)/current_price)*100
+    discount = ((intrinsic_value-current_price)/current_price)*100
     discount = round(discount, 2)
     if discount > 50:
         recommendation = 'Strong Buy'
@@ -320,23 +317,22 @@ for stock in stocks:
         'Company': company_name,
         'Ticker': symbol,
         'LT Growth Est.': "{:.1f}".format(actual_growth),
-        'Stock Intrinsic Value': price_final,
-        'Wall St. Target Price': target_price, 
-        'Average': price_final
+        'Stock Intrinsic Value': intrinsic_value,
         'Current Price': current_price,
         'Discount %': "{:.1f}".format(discount),
         'Recommendation': recommendation
     })
     stats = pd.DataFrame(data)
-    
+    pd.DataFrame.to_excel(stats, '/Users/evanwright/Downloads/DipBuys.xlsx')
     marketcap = int(round((current_price*shares_outstanding)/1000000000, 0))
-    intrinsic_market_cap = int(round((price_final*shares_outstanding)/1000000000, 2))
+    intrinsic_market_cap = int(round((intrinsic_value*shares_outstanding)/1000000000, 2))
    
-    print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value:>16}{target_price:>17}{price_final:>16}{current_price:>15}{discount:>15}%{recommendation:>17}")
+    
+    print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value:>16}{current_price:>16}{discount:>15}%{recommendation:>17}")
     name.append(symbol)
     price.append(marketcap)
     value.append(intrinsic_market_cap)
-    ratio.append(price_final/current_price)
+    ratio.append(intrinsic_value/current_price)
 
 plt.style.use('seaborn')
 plt.title('Price vs Intrinsic Value Scatterplot')
@@ -346,10 +342,11 @@ import matplotlib.colors as mcolors
 mcolors.TwoSlopeNorm(vcenter = 1)
 plt.scatter(price, value, s = 20, c = ratio, edgecolor = 'k', cmap = 'RdYlGn')
 for i, label in enumerate(name):
-    plt.annotate(label, (price[i], value[i]))
+    plt.annotate(label, (price[i], value[i]), size = 7)
 myMax = max(max(price), max(value))
 plt.plot([0,myMax], [0,myMax], color = 'gray')
 plt.show()
+
 
 
 
