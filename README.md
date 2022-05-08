@@ -1,5 +1,5 @@
 # Stock-Price-Intrinsic-Value-Calculator
-This program calculates the intrinsic value of a list of stocks using data from various financial websites and gives a buy, sell, or hold recommendation as well as a scatterplot for better visualization. 
+This program calculates the intrinsic value of a list of stocks using data from various financial websites and gives a buy, sell, or hold recommendation as well as a scatterplot for better visualization. Stocks are entered by the user and program is run on-demand. 
 
 Here is a sample screen from 1/21/22.
 
