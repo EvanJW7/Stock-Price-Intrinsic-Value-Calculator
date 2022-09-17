@@ -1,6 +1,7 @@
 #ENTER ANY NUMBER OF STOCKS
-stocks = ['COIN', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 
-          'CVX', 'V', 'FDX', 'SQ', 'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
+stocks = ['COIN', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ', 
+          'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
+
 data = list()
 import requests
 import pandas as pd
@@ -26,8 +27,7 @@ for stock in stocks:
         soup = BeautifulSoup(res.text, 'lxml')
         PE = soup.find_all('td', class_ = 'text-right')[164]
         PEG = soup.findAll('td', class_ = 'text-right')[166]
-        LTGrowth = (float(PE.text)/float(PEG.text))
-        
+        LTGrowth = (float(PE.text)/float(PEG.text)) 
     except:
         try:
             url = f'https://www.marketwatch.com/investing/stock/{stock}/analystestimates?mod=mw_quote_tab'
@@ -142,7 +142,6 @@ for stock in stocks:
     except:
         PrevEPSGrowth = operating_cash_growth  
     
-    
     try:
         if point1<point2 and point2<point3 and point3<point4 and point4<point5:
             actual_growth = LTGrowth*.75 + operating_cash_growth*.125 + PrevEPSGrowth*.125
@@ -165,8 +164,7 @@ for stock in stocks:
     #OPERATING CASH TTM 
     try:
         stock = yf.Ticker(stock)
-        operating_cash = float(stock.info['operatingCashflow'])
-       
+        operating_cash = float(stock.info['operatingCashflow']) 
     except:
         continue 
         
