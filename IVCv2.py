@@ -66,9 +66,7 @@ for stock in stocks:
         url = f'https://www.reuters.com/companies/{stock}.OQ/key-metrics'
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'lxml')
-        PrevEPSGrowth = float(soup.findAll('span',
-                                           class_="TextLabel__text-label___3oCVw TextLabel__black___2FN-Z TextLabel__regular___2X0ym digits MarketsTable-value-FP5ul")[
-                                  115].text)
+        PrevEPSGrowth = float(soup.findAll('span', class_="TextLabel__text-label___3oCVw TextLabel__black___2FN-Z TextLabel__regular___2X0ym digits MarketsTable-value-FP5ul")[115].text)
     except:
         PrevEPSGrowth = operating_cash_growth
 
