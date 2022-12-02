@@ -3,8 +3,7 @@ import yfinance as yf
 from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 
-print("{:<6} {:>13} {:>17} {:>15} {:>12} {:>17}".format('Stock', 'Est.Growth', 'Intrinsic Value', 'Current Price',
-                                                        'Discount', 'Recommendation'))
+print("{:<6} {:>13} {:>17} {:>15} {:>12} {:>17}".format('Stock', 'Est.Growth', 'Intrinsic Value', 'Current Price', 'Discount', 'Recommendation'))
 print('--------------------------------------------------------------------------------------')
 
 name, price, value, ratio = [], [], [], []
