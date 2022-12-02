@@ -10,7 +10,8 @@ print('-------------------------------------------------------------------------
 name, price, value, ratio = [], [], [], []
 
 #ENTER DESIRED STOCK TICKERS HERE
-stocks = ['GS', 'JPM', 'MS', 'C', 'AMD', 'T', 'PTON', 'BTU', 'XOM']
+stocks = ['COIN', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ',
+          'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
 
 def main():
     for stock in stocks:
@@ -36,7 +37,8 @@ def main():
                 growth = []
                 i = 1
                 while i < len(eps_estimates):
-                    growth.append(((eps_estimates[i]-eps_estimates[i-1])/abs(eps_estimates[i-1]))*100)
+                    n = (eps_estimates[i]-eps_estimates[i-1])/abs(eps_estimates[i-1])*100
+                    growth.append(n if n < 100 else 100)
                     i += 1
                 lt_growth = (sum(growth)/len(growth))/2
             except:
@@ -89,7 +91,7 @@ def main():
         total_cash_by_yr = [operating_cash]
         if operating_cash > 0:
             x = 0
-            while x < 11:
+            while x < 13:
                 total_cash_by_yr.append(total_cash_by_yr[-1] * (1 + actual_growth))
                 x += 1
             total_cash_by_yr.pop(-1)
@@ -99,15 +101,14 @@ def main():
         # DISCOUNT RATES PER YEAR
         discount_rates_by_year = []
         x = 1
-        while x < 11:
+        while x < 13:
             discount_rates_by_year.append(1 / (1 + discountrate) ** x)
             x += 1
-
 
         # DISCOUNTED CASH BY YEAR
         net_discounted_cash_by_yr = []
         x = 0
-        while x < 10:
+        while x < 12:
             net_discounted_cash_by_yr.append(discount_rates_by_year[x] * total_cash_by_yr[x])
             x += 1
 
