@@ -2,18 +2,19 @@ import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
+import matplotlib.colors as mcolors
 
-print("{:<6} {:>13} {:>17} {:>15} {:>12} {:>17}".format('Stock', 'Est.Growth', 'Intrinsic Value', 'Current Price',
-                                                        'Discount', 'Recommendation'))
-print('--------------------------------------------------------------------------------------')
-
-name, price, value, ratio = [], [], [], []
-
-#ENTER DESIRED STOCK TICKERS HERE
-stocks = ['COIN', 'AVGO','PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ',
-          'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
 
 def main():
+    # ENTER DESIRED STOCK TICKERS HERE
+    stocks = ['AVGO', 'PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ',
+              'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
+
+    print(f"{'Stock':<6} {'Est.Growth':>13} {'Intrinsic Value':>17} {'Current Price':>15} {'Discount':>12} {'Recommendation':>17}")
+    print('--------------------------------------------------------------------------------------')
+
+    name, price, value, ratio = [], [], [], []
+
     for stock in stocks:
         # LONG TERM GROWTH
         try:
@@ -37,23 +38,23 @@ def main():
                 growth = []
                 i = 1
                 while i < len(eps_estimates):
-                    n = (eps_estimates[i]-eps_estimates[i-1])/abs(eps_estimates[i-1])*100
+                    n = (eps_estimates[i] - eps_estimates[i - 1]) / abs(eps_estimates[i - 1]) * 100
                     growth.append(n if n < 100 else 100)
                     i += 1
-                lt_growth = (sum(growth)/len(growth))/2
+                lt_growth = (sum(growth) / len(growth)) / 2
             except:
                 continue
 
-        actual_growth = lt_growth
+        symbol = stock
 
-        # DIVIDEND
+        # Total Dividend Payout Over 12 Years
         try:
             url = f'https://www.marketwatch.com/investing/stock/{stock}?mod=quote_search'
             res = requests.get(url)
             soup = BeautifulSoup(res.text, 'lxml')
             d = soup.findAll('span', class_='primary')[17]
             d = str(d.text).replace('$', '')
-            dividend = (float(d) * 4 * 10)
+            dividend = (float(d) * 4 * 12)
         except:
             dividend = 0
 
@@ -64,35 +65,35 @@ def main():
         except:
             continue
 
-        # CURRENT DISCOUNT RATE
+        # CURRENT DISCOUNT RATE, based on beta
         try:
             beta = stock.info['beta']
             if beta < .80:
-                discountrate = .05
+                discount_rate = .05
             elif .80 < beta <= 1:
-                discountrate = .06
+                discount_rate = .06
             elif 1 < beta <= 1.1:
-                discountrate = .065
+                discount_rate = .065
             elif 1.1 < beta <= 1.2:
-                discountrate = .07
+                discount_rate = .07
             elif 1.2 < beta <= 1.3:
-                discountrate = .075
+                discount_rate = .075
             elif 1.3 < beta <= 1.4:
-                discountrate = .08
+                discount_rate = .08
             elif 1.4 < beta <= 1.5999:
-                discountrate = .085
+                discount_rate = .085
             else:
-                discountrate = .09
+                discount_rate = .09
         except:
-            discountrate = .06
+            discount_rate = .06
 
         # PROJECTED CASH FLOW BY YEAR
-        actual_growth = actual_growth / 100
+        lt_growth = lt_growth / 100
         total_cash_by_yr = [operating_cash]
         if operating_cash > 0:
             x = 0
             while x < 13:
-                total_cash_by_yr.append(total_cash_by_yr[-1] * (1 + actual_growth))
+                total_cash_by_yr.append(total_cash_by_yr[-1] * (1 + lt_growth))
                 x += 1
             total_cash_by_yr.pop(-1)
         else:
@@ -102,7 +103,7 @@ def main():
         discount_rates_by_year = []
         x = 1
         while x < 13:
-            discount_rates_by_year.append(1 / (1 + discountrate) ** x)
+            discount_rates_by_year.append(1 / (1 + discount_rate) ** x)
             x += 1
 
         # DISCOUNTED CASH BY YEAR
@@ -118,23 +119,15 @@ def main():
         except:
             continue
 
-        # COMPANY NAME
-        company_name = stock.info['shortName']
-
-        # TICKER SYMBOL
-        symbol = stock.info['symbol']
-
         # TOTAL CASH
         try:
-            total_cash_final = stock.info['totalCash']
-            total_cash_final = float(total_cash_final)
+            total_cash_final = float(stock.info['totalCash'])
         except:
             continue
 
         # TOTAL DEBT
         try:
-            total_debt_final = stock.info['totalDebt']
-            total_debt_final = float(total_debt_final)
+            total_debt_final = float(stock.info['totalDebt'])
         except:
             continue
 
@@ -154,19 +147,15 @@ def main():
         debt_per_share = total_debt_final / shares_outstanding
 
         # INTRINSIC VALUE
-        intrinsic_value = gross_intrinsic_value + dividend + cash_per_share - debt_per_share
-        intrinsic_value = "{:.2f}".format(intrinsic_value)
-        intrinsic_value = float(intrinsic_value)
+        intrinsic_value = round(gross_intrinsic_value + dividend + cash_per_share - debt_per_share, 2)
         if intrinsic_value < 0:
             intrinsic_value = 0
 
-        # currentprice
-        current_price = stock.info['currentPrice']
-        current_price = round(current_price, 2)
+        # CURRENT PRICE
+        current_price = round(stock.info['currentPrice'], 2)
 
         # DISCOUNT
-        discount = ((intrinsic_value - current_price) / current_price) * 100
-        discount = round(discount, 2)
+        discount = round(((intrinsic_value - current_price) / current_price) * 100, 2)
         if discount > 50:
             recommendation = 'Strong Buy'
         elif 15 <= discount <= 50:
@@ -178,14 +167,14 @@ def main():
         else:
             recommendation = "Strong Sell"
 
-        actual_growth = round(actual_growth * 100, 2)
+        lt_growth = round(lt_growth * 100, 2)
 
-        marketCap = int(round((current_price * shares_outstanding) / 1000000000, 0))
-        intrinsic_market_cap = int(round((intrinsic_value * shares_outstanding) / 1000000000, 2))
+        market_cap = int(round((current_price * shares_outstanding) / 1000000000))
+        intrinsic_market_cap = int(round((intrinsic_value * shares_outstanding) / 1000000000))
 
-        print(f"{symbol:<5}{actual_growth:>12}%{intrinsic_value:>16}{current_price:>16}{discount:>15}%{recommendation:>17}")
+        print(f"{symbol:<5}{lt_growth:>12}%{intrinsic_value:>16}{current_price:>16}{discount:>15}%{recommendation:>17}")
         name.append(symbol)
-        price.append(marketCap)
+        price.append(market_cap)
         value.append(intrinsic_market_cap)
         ratio.append(intrinsic_value / current_price)
 
@@ -194,15 +183,13 @@ def main():
     plt.title('Price vs Intrinsic Value Scatterplot')
     plt.xlabel('Market Cap (billions)')
     plt.ylabel('Total Intrinsic Value (billions)')
-    import matplotlib.colors as mcolors
-
     mcolors.TwoSlopeNorm(vcenter=1)
     plt.scatter(price, value, s=40, c=ratio, edgecolor='k', cmap='RdYlGn')
-    for i, label in enumerate(name):
+    for i, label in enumerate(stocks):
         plt.annotate(label, (price[i], value[i]), size=12)
     try:
-        myMax = max(max(price), max(value))
-        plt.plot([0, myMax], [0, myMax], color='gray')
+        my_max = max(max(price), max(value))
+        plt.plot([0, my_max], [0, my_max], color='gray')
         plt.show()
     except:
         print(stock, "\t   No data")
