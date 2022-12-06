@@ -8,7 +8,6 @@ import matplotlib.colors as mcolors
 stocks = ['AVGO', 'PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ',
               'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
 
-
 def main():
     print(f"{'Stock':<6} {'Est.Growth':>13} {'Intrinsic Value':>17} {'Current Price':>15} {'Discount':>12} {'Recommendation':>17}")
     print('--------------------------------------------------------------------------------------')
