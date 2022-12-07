@@ -67,7 +67,7 @@ def main(stocks):
         # CURRENT DISCOUNT RATE, based on beta
         try:
             beta = stock.info['beta']
-            if beta < .80:
+            if beta <= .80:
                 discount_rate = .05
             elif .80 < beta <= 1:
                 discount_rate = .06
