@@ -1,19 +1,28 @@
+import pandas as pd
 import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 
-# ENTER DESIRED STOCK TICKERS HERE
-stocks = ['AVGO', 'PYPL', 'PFE', 'F', 'KO', 'AMD', 'ROKU', 'PTON', 'QCOM', 'JNJ', 'CVX', 'V', 'FDX', 'SQ',
-              'CRWD', 'SBUX', 'AMAT', 'INFY', 'XOM', 'CL']
+# ENTER DESIRED STOCK TICKERS HERE, or run function from separate file
+stocks = []
+
 
 def main(stocks):
-    print(f"{'Stock':<6} {'Est.Growth':>13} {'Intrinsic Value':>17} {'Current Price':>15} {'Discount':>12} {'Recommendation':>17}")
+    print(f"{'Stock':<6} {'Est.Growth':>13} {'Intrinsic Value':>18} {'Price':>10} {'Discount':>16} {'Recommendation':>17}")
     print('--------------------------------------------------------------------------------------')
-
+    
     name, price, value, ratio = [], [], [], []
-
+    data = {
+        'Stock': [],
+        'Estimated Growth': [],
+        'Intrinsic Value': [],
+        'Current Price': [],
+        'Discount': [],
+        'Recommendation': []
+    }
+    
     for stock in stocks:
         # LONG TERM GROWTH
         try:
@@ -67,7 +76,7 @@ def main(stocks):
         # CURRENT DISCOUNT RATE, based on beta
         try:
             beta = stock.info['beta']
-            if beta <= .80:
+            if beta < .80:
                 discount_rate = .05
             elif .80 < beta <= 1:
                 discount_rate = .06
@@ -172,26 +181,36 @@ def main(stocks):
         intrinsic_market_cap = int(round((intrinsic_value * shares_outstanding) / 1000000000))
 
         print(f"{symbol:<5}{lt_growth:>12}%{intrinsic_value:>16}{current_price:>16}{discount:>15}%{recommendation:>17}")
+
         name.append(symbol)
         price.append(market_cap)
         value.append(intrinsic_market_cap)
         ratio.append(intrinsic_value / current_price)
+        data['Stock'].append(symbol)
+        data['Estimated Growth'].append(lt_growth)
+        data['Intrinsic Value'].append(intrinsic_value)
+        data['Current Price'].append(price)
+        data['Discount'].append(discount)
+        data['Recommendation'].append(recommendation)
+
+    df = pd.DataFrame(data)
+    #Export to Excel or CSV if needed here
 
     plt.figure(figsize=(11, 7))
     plt.style.use('seaborn')
-    plt.title('Price vs Intrinsic Value Scatterplot')
+    plt.title('Price vs Intrinsic Value Scatter-plot')
     plt.xlabel('Market Cap (billions)')
     plt.ylabel('Total Intrinsic Value (billions)')
     mcolors.TwoSlopeNorm(vcenter=1)
     plt.scatter(price, value, s=40, c=ratio, edgecolor='k', cmap='RdYlGn')
-    for i, label in enumerate(stocks):
+    for i, label in enumerate(name):
         plt.annotate(label, (price[i], value[i]), size=12)
     try:
         my_max = max(max(price), max(value))
         plt.plot([0, my_max], [0, my_max], color='gray')
         plt.show()
     except:
-        print(stock, "\t   No data")
+        print("No data")
 
 
 if __name__ == '__main__':
