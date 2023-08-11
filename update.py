@@ -10,7 +10,7 @@ def get_long_term_growth(stock):
         headers = {'Accept': 'text/html'}
         res = requests.get(url, headers=headers)
         if res.status_code != 200:
-            print(f"Error on get_long_term_growth request: {res.status_code}")
+            print(f"Error on get_long_term_growth request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         pe = soup.find_all('td', class_='text-right')[164]
         peg = soup.findAll('td', class_='text-right')[166]
@@ -25,7 +25,7 @@ def get_beta(stock):
         url = f'https://www.marketwatch.com/investing/stock/{stock}?mod=search_symbol'
         res = requests.get(url)
         if res.status_code != 200:
-            print(f"Error on get_beta request: {res.status_code}")
+            print(f"Error on get_beta request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         beta = soup.findAll('li', class_="kv__item")[6]
         beta = float(beta.text[5:].strip())
@@ -39,7 +39,7 @@ def get_dividend(stock):
         url = f'https://www.marketwatch.com/investing/stock/{stock}?mod=quote_search'
         res = requests.get(url)
         if res.status_code != 200:
-            print(f"Error on get_divident request: {res.status_code}")
+            print(f"Error on get_divident request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         d = soup.findAll('span', class_='primary')[17]
         d = str(d.text).replace('$', '')
@@ -54,7 +54,7 @@ def get_cash(stock):
         url = f'https://www.marketwatch.com/investing/stock/{stock}/financials/balance-sheet'
         res = requests.get(url)
         if res.status_code != 200:
-            print(f"Error on get_cash request: {res.status_code}")
+            print(f"Error on get_cash request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         cash = soup.findAll('div', class_="cell__content")[166]
         cash = cash.text[::].strip()
@@ -71,6 +71,8 @@ def get_debt(stock):
     try:
         url = f'https://www.marketwatch.com/investing/stock/{stock}/financials/balance-sheet'
         res = requests.get(url)
+        if res.status_code != 200:
+            print(f"Error on get_debt request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         debt = soup.findAll('div', class_="cell__content")[390]
         debt = debt.text[::].strip()
@@ -87,6 +89,8 @@ def get_operating_cash(stock):
     try:
         url = f'https://www.marketwatch.com/investing/stock/{stock}/financials/cash-flow'
         res = requests.get(url)
+        if res.status_code != 200:
+            print(f"Error on get_operating_cash request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         operating = soup.findAll('div', class_="cell__content")[134]
         operating = operating.text[::].strip()
@@ -104,7 +108,7 @@ def get_shares_outstanding(stock):
         url = f'https://www.marketwatch.com/investing/{stock}/aapl?mod=search_symbol'
         res = requests.get(url)
         if res.status_code != 200:
-            print(f"Error on get_shares_outstanding request: {res.status_code}")
+            print(f"Error on get_shares_outstanding request for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         so = soup.findAll('li', class_="kv__item")[4]
         so = so.text[20:].strip()
@@ -174,7 +178,7 @@ def get_current_price(stock):
         url = f'https://www.marketwatch.com/investing/stock/{stock}?mod=search_symbol'
         res = requests.get(url)
         if res.status_code != 200:
-            print(f"Error on current price URL: {res.status_code}")
+            print(f"Error on current price URL for {stock}: {res.status_code}")
         soup = BeautifulSoup(res.text, 'lxml')
         cp = soup.findAll('li', class_="kv__item")[0]
         cp = cp.text[7:].strip()
